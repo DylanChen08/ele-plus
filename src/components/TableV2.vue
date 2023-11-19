@@ -14,68 +14,119 @@
   </div>
 </template>
 
-
 <script setup>
-// Import necessary Vue features
-import { ref, unref } from 'vue';
-import { ElCheckbox } from 'element-plus';
+import {h, onMounted, ref, unref} from 'vue';
+import {response} from "./response.js";
+import {ElButton} from "element-plus";
 
-// Define the functional component
-const SelectionCell = ({
-                         value,
-                         intermediate = false,
-                         onChange,
-                       }) => {
-  // return (
-  //     // Render the ElCheckbox component
-  //     ElCheckbox({
-  //       onChange,
-  //       modelValue: value,
-  //       indeterminate: intermediate,
-  //     })
-  // );
+const SelectionCell = ({value, intermediate = false, onChange}) => {
+  // ... (unchanged)
 };
+const generateColumns = (length = 10, prefix = 'column-', props, columnConfigs) =>
+    Array.from({ length }).map((_, columnIndex) => {
+      const columnConfig = columnConfigs[columnIndex] || {};
+      const columnWidth = columnConfig.width || 150;
 
-// Generate columns function
-const generateColumns = (length = 10, prefix = 'column-', props) =>
-    Array.from({ length }).map((_, columnIndex) => ({
-      ...(props || {}),
-      key: `${prefix}${columnIndex}`,
-      dataKey: `${prefix}${columnIndex}`,
-      title: `Column ${columnIndex}闪`,
-      width: 150,
-    }));
-
-// Generate data function
-const generateData = (
-    columns,
-    length = 200,
-    prefix = 'row-'
-) =>
-    Array.from({ length }).map((_, rowIndex) => {
-      return columns.reduce(
-          (rowData, column, columnIndex) => {
-            rowData[column.dataKey] = `Row ${rowIndex} - Col ${columnIndex}`;
-            return rowData;
-          },
-          {
-            id: `${prefix}${rowIndex}`,
-            checked: false,
-            parentId: null,
+      return {
+        ...(props || {}),
+        key: `${prefix}${columnIndex}`,
+        dataKey: `${prefix}${columnIndex}`,
+        title: columnConfig.title || `Column ${columnIndex}`,
+        width: columnWidth,
+        cellRenderer: ({ rowData }) => {
+          if (columnConfig.render) {
+            // Call the provided render function for column logic
+            return columnConfig.render(rowData);
           }
-      );
+
+          // Check if the column is a button column
+          if (columnConfig.isButtonColumn) {
+            // Render buttons based on the specified buttons in the configuration
+            const buttons = columnConfig.buttons.map((button, index) => {
+              return h(ElButton, {
+                type: button.type || 'success',
+                size: button.size || 'mini',
+                onClick: () => button.onClick(rowData),
+                key: index,
+              }, button.label);
+            });
+
+            return h('div', buttons);
+          }
+
+          // Default: render the text content
+          return rowData[`${prefix}${columnIndex}`];
+        },
+      };
     });
 
-// Define columns
-const columns = generateColumns(10);
+// Add your button logic here
+const handleCustomButton = (rowData) => {
+  // Implement custom button logic
+  console.log('Custom Button Clicked:', rowData);
+};
+
+const columns = generateColumns(7, 'column-', {}, {
+  3: {
+    width: 200,
+    title: '自定义标题',
+    render: (rowData) => {
+      return rowData['passImage'];
+    },
+  },
+  4: {
+    width: 150,
+    title: '自定义图片标题',
+    render: (rowData) => {
+      const imageUrl = rowData['passImage'];
+      return h('div', { style: 'max-width: 100%; max-height: 100px; overflow: hidden;' }, ()=>[
+        h('img', { src: imageUrl, alt: 'Image', style: 'width: 100%; height: auto;' })
+      ]);
+    },
+  },
+  // Configure the button column with custom buttons
+  6: {
+    isButtonColumn: true,
+    buttons: [
+      {
+        label: '删除',
+        type: 'danger',
+        size: 'small',
+        onClick: (rowData) => {
+          // Implement delete logic
+          console.log('Delete:', rowData);
+        },
+      },
+      {
+        label: '编辑',
+        type: 'primary',
+        size: 'small',
+        onClick: (rowData) => {
+          // Implement edit logic
+          console.log('Edit:', rowData);
+        },
+      },
+      // Add more buttons as needed
+      {
+        label: '自定义按钮',
+        type: 'warning',
+        size: 'small',
+        onClick: handleCustomButton,
+      },
+    ],
+  },
+});
+
+
+
+
 columns.unshift({
   key: 'selection',
   width: 50,
-  cellRenderer: ({ rowData }) => {
+  cellRenderer: ({rowData}) => {
     const onChange = (value) => (rowData.checked = value);
-    return SelectionCell({ value: rowData.checked, onChange });
+    return SelectionCell({value: rowData.checked, onChange});
   },
-
   headerCellRenderer: () => {
     const _data = unref(data);
     const onChange = (value) =>
@@ -94,10 +145,23 @@ columns.unshift({
   },
 });
 
-// Define the data ref
-const data = ref(generateData(columns, 200));
+const data = ref([]);
 
-// Export the components and data
+const fetchData = async () => {
+  try {
+    // Fetch data from your backend API
+    // const response = await fetch('your_backend_api_url');
+    // const responseData = await response.json(); // Assuming the response is in JSON format
+    data.value = response.data; // Update the data with the actual backend response
 
+    console.log('data:', data.value);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+};
+
+onMounted(() => {
+  fetchData();
+});
 
 </script>
