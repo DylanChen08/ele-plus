@@ -19,7 +19,7 @@ import {h, onMounted, ref, unref} from 'vue';
 import {response} from "./response.js";
 import {ElButton} from "element-plus";
 
-const SelectionCell = ({value, intermediate = false, onChange}) => {
+const SelectionCell = ({  value, intermediate = false, onChange}) => {
   // ... (unchanged)
 };
 const generateColumns = (length = 10, prefix = 'column-', props, columnConfigs) =>

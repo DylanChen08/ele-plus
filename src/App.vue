@@ -1,10 +1,13 @@
 <script setup>
 import TableV2 from "./components/TableV2.vue";
+import DynamicForm from "./components/dynamic-form.vue";
 </script>
 
 <template>
     <section class="app-container">
-      <TableV2></TableV2>
+<!--      <TableV2></TableV2>-->
+
+      <dynamic-form form-config="[]"></dynamic-form>
     </section>
 </template>
 
